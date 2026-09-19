@@ -1,0 +1,430 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeBron 實用英文語句練習</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #1e2538;
+      --text: #f8fafc;
+      --accent: #facc15;
+      --border: #334155;
+      --success: #22c55e;
+      --fail: #f43f5e;
+      --blue: #38bdf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background-color: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      z-index: 100;
+    }
+    .overlay.hidden { display: none; }
+    .overlay-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .overlay-desc {
+      font-size: 15px;
+      color: #94a3b8;
+      max-width: 440px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .start-btn {
+      padding: 14px 36px;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #facc15, #eab308);
+      color: #0b0f19;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(250, 204, 21, 0.3);
+      transition: transform 0.15s ease;
+    }
+    .start-btn:active { transform: scale(0.96); }
+
+    .progress-box {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .card-container {
+      perspective: 1000px;
+      width: 100%;
+      max-width: 520px;
+      min-height: 240px;
+      cursor: pointer;
+    }
+    .card-inner {
+      position: relative;
+      width: 100%;
+      min-height: 240px;
+      transition: transform 0.35s ease;
+      transform-style: preserve-3d;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+    .card-inner.is-flipped {
+      transform: rotateY(180deg);
+    }
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .card-back {
+      transform: rotateY(180deg);
+    }
+    .sentence {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .translation {
+      font-size: 18px;
+      color: var(--accent);
+      line-height: 1.4;
+      font-weight: 600;
+    }
+    .card-hint {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 8px;
+    }
+    .state-indicator {
+      margin-top: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 8px 18px;
+      border-radius: 20px;
+      background: #111827;
+      border: 1px solid var(--border);
+      color: var(--blue);
+    }
+    .state-indicator.listening {
+      border-color: var(--fail);
+      color: var(--fail);
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .status-badge {
+      margin-top: 12px;
+      min-height: 24px;
+      font-size: 13px;
+      color: #94a3b8;
+      text-align: center;
+      max-width: 520px;
+    }
+    .status-badge.correct { color: var(--success); font-weight: 600; }
+    .status-badge.wrong { color: var(--fail); font-weight: 600; }
+    .nav-buttons {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 520px;
+      margin-top: 16px;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav-btn:active { transform: scale(0.97); }
+  </style>
+</head>
+<body>
+
+  <div class="overlay" id="startOverlay">
+    <div class="overlay-title">LeBron 實用英文語句練習</div>
+    <div class="overlay-desc">
+      系統將自動為你朗讀，讀完後麥克風自動啟動換你跟讀。<br>
+      辨識通過後自動前進下一句。
+    </div>
+    <button class="start-btn" onclick="startApp()">開始練習</button>
+  </div>
+
+  <div class="overlay hidden" id="finishOverlay">
+    <div style="font-size: 48px; margin-bottom: 12px;">🏆</div>
+    <div class="overlay-title">恭喜完成練習！</div>
+    <div class="overlay-desc">所有經典語句已全數朗讀與跟讀完畢。</div>
+    <button class="start-btn" onclick="restartApp()">再練一次</button>
+  </div>
+
+  <div class="progress-box">
+    <span id="counter">1 / 8</span>
+    <span>點擊卡片翻面看中文（或按空白鍵）</span>
+  </div>
+
+  <div class="card-container" onclick="flipCard()">
+    <div class="card-inner" id="cardInner">
+      <div class="card-face card-front">
+        <div class="sentence" id="frontText"></div>
+        <div class="card-hint">點擊翻面查看中文釋義</div>
+      </div>
+      <div class="card-face card-back">
+        <div class="translation" id="backText"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="state-indicator" id="stateIndicator">🔊 系統準備朗讀中...</div>
+  <div class="status-badge" id="statusBadge"></div>
+
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="manualPrev()">上一張 (←)</button>
+    <button class="nav-btn" onclick="manualNext()">下一張 (→)</button>
+  </div>
+
+  <script>
+    const cards = [
+      { text: "LeBron James", zh: "樂邦·詹士（老詹）" },
+      { text: "LeBron is the greatest second-place player of all time", zh: "樂邦（老詹）是歷史第一老二" },
+      { text: "LeBron's career achievements", zh: "樂邦（老詹）的生涯成就" },
+      { text: "LeBron has lost in the Finals six times", zh: "樂邦（老詹）在總決賽輸過六次" },
+      { text: "LeBron is the all-time leader in missed field goals", zh: "樂邦（老詹）是歷史打鐵王（總投籃不進數第一）" },
+      { text: "LeBron's iconic signature move", zh: "樂邦（老詹）的招牌技巧" },
+      { text: "LeBron's real signature moves are crying to the refs and flopping", zh: "樂邦（老詹）的招牌技巧是向裁判抱怨和假摔" },
+      { text: "LeBron is the GOAT: Greatest Of All-star Teammates", zh: "樂邦（老詹）是 GOAT：史上最會抱團的狗特" }
+    ];
+
+    let currentIndex = 0;
+    let isFlipped = false;
+    let recognition = null;
+    let isListening = false;
+    let autoStepTimer = null;
+    let bestVoice = null;
+
+    const startOverlay = document.getElementById("startOverlay");
+    const finishOverlay = document.getElementById("finishOverlay");
+    const cardInner = document.getElementById("cardInner");
+    const frontText = document.getElementById("frontText");
+    const backText = document.getElementById("backText");
+    const counter = document.getElementById("counter");
+    const stateIndicator = document.getElementById("stateIndicator");
+    const statusBadge = document.getElementById("statusBadge");
+
+    function loadBestVoice() {
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices.length) return;
+      bestVoice = voices.find(v => v.lang.startsWith("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Siri")))
+               || voices.find(v => v.lang === "en-US")
+               || voices.find(v => v.lang.startsWith("en"));
+    }
+
+    if ("speechSynthesis" in window) {
+      loadBestVoice();
+      window.speechSynthesis.onvoiceschanged = loadBestVoice;
+    }
+
+    function initSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return null;
+      const r = new SpeechRecognition();
+      r.lang = "en-US";
+      r.interimResults = false;
+      r.maxAlternatives = 1;
+
+      r.onstart = () => {
+        isListening = true;
+        stateIndicator.textContent = "🎙️ 換你讀：請唸出英文句子...";
+        stateIndicator.className = "state-indicator listening";
+      };
+
+      r.onresult = (e) => {
+        const transcript = e.results[0][0].transcript.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+        const target = cards[currentIndex].text.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+
+        const targetWords = target.split(" ");
+        const matchCount = targetWords.filter(word => transcript.includes(word)).length;
+        const passRate = matchCount / targetWords.length;
+
+        if (passRate >= 0.5) {
+          statusBadge.textContent = `辨識成功！("${e.results[0][0].transcript}")`;
+          statusBadge.className = "status-badge correct";
+          stateIndicator.textContent = "✅ 辨識通過，即將進入下一張...";
+          stateIndicator.className = "state-indicator";
+          
+          autoStepTimer = setTimeout(() => {
+            if (currentIndex < cards.length - 1) {
+              currentIndex++;
+              runStepForCurrentCard();
+            } else {
+              finishPractice();
+            }
+          }, 1000);
+        } else {
+          statusBadge.textContent = `聽起來像: "${e.results[0][0].transcript}"，請再唸一次`;
+          statusBadge.className = "status-badge wrong";
+          autoStepTimer = setTimeout(() => {
+            startListening();
+          }, 1200);
+        }
+      };
+
+      r.onerror = (e) => {
+        if (e.error !== "no-speech") {
+          statusBadge.textContent = `辨識提示 (${e.error})，請再試一次`;
+          statusBadge.className = "status-badge wrong";
+        }
+        autoStepTimer = setTimeout(() => {
+          startListening();
+        }, 1200);
+      };
+
+      r.onend = () => {
+        isListening = false;
+      };
+
+      return r;
+    }
+
+    function stopAllProcesses() {
+      clearTimeout(autoStepTimer);
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      if (recognition && isListening) {
+        try { recognition.stop(); } catch(e){}
+      }
+    }
+
+    function runStepForCurrentCard() {
+      stopAllProcesses();
+      const card = cards[currentIndex];
+      frontText.textContent = card.text;
+      backText.textContent = card.zh;
+      counter.textContent = `${currentIndex + 1} / ${cards.length}`;
+      if (isFlipped) flipCard();
+
+      stateIndicator.textContent = "🔊 系統朗讀中...";
+      stateIndicator.className = "state-indicator";
+      statusBadge.textContent = "";
+      statusBadge.className = "status-badge";
+
+      const utterance = new SpeechSynthesisUtterance(card.text);
+      if (bestVoice) utterance.voice = bestVoice;
+      utterance.lang = "en-US";
+      utterance.rate = 0.95;
+
+      utterance.onend = () => {
+        autoStepTimer = setTimeout(() => {
+          startListening();
+        }, 400);
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function startListening() {
+      if (!recognition) recognition = initSpeechRecognition();
+      if (!recognition) {
+        statusBadge.textContent = "請使用 Chrome 或 Edge 瀏覽器以獲得完整的麥克風支援。";
+        statusBadge.className = "status-badge wrong";
+        return;
+      }
+      try {
+        recognition.start();
+      } catch(e) {
+        autoStepTimer = setTimeout(startListening, 500);
+      }
+    }
+
+    function flipCard() {
+      isFlipped = !isFlipped;
+      cardInner.classList.toggle("is-flipped", isFlipped);
+    }
+
+    function manualNext() {
+      if (currentIndex < cards.length - 1) {
+        currentIndex++;
+        runStepForCurrentCard();
+      } else {
+        finishPractice();
+      }
+    }
+
+    function manualPrev() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        runStepForCurrentCard();
+      }
+    }
+
+    function startApp() {
+      startOverlay.classList.add("hidden");
+      currentIndex = 0;
+      runStepForCurrentCard();
+    }
+
+    function finishPractice() {
+      stopAllProcesses();
+      finishOverlay.classList.remove("hidden");
+    }
+
+    function restartApp() {
+      finishOverlay.classList.add("hidden");
+      currentIndex = 0;
+      runStepForCurrentCard();
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (startOverlay.classList.contains("hidden") && finishOverlay.classList.contains("hidden")) {
+        if (e.key === " ") {
+          e.preventDefault();
+          flipCard();
+        } else if (e.key === "ArrowRight") {
+          manualNext();
+        } else if (e.key === "ArrowLeft") {
+          manualPrev();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
